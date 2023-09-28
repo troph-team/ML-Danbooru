@@ -106,7 +106,7 @@ class Demo:
             output = torch.sigmoid(self.model(img)).cpu().view(-1)
         pred = torch.where(output > self.args.thr)[0].numpy()
 
-        cls_list = [(self.class_map[str(i)], output[i]) for i in pred]
+        cls_list = [(self.class_map[str(i)], float(output[i])) for i in pred]
         return cls_list
 
     @torch.no_grad()
@@ -122,17 +122,57 @@ class Demo:
                 img = self.load_data(item).to(device)
                 cls_list = self.infer_one(img)
                 cls_list.sort(reverse=True, key=lambda x: x[1])
-                if self.args.out_type == 'txt':
-                    with open(item[:item.rfind('.')] + '.txt', 'w', encoding='utf8') as f:
-                        f.write(', '.join([name.replace('_', ' ') for name, prob in cls_list]))
-                elif self.args.out_type == 'json':
-                    tag_dict[os.path.basename(item)] = ', '.join([name.replace('_', ' ') for name, prob in cls_list])
+
+                tag_probs = {name.replace('_', ' '): prob for name, prob in cls_list}
+                tag_str = ', '.join([name.replace('_', ' ') for name, _ in cls_list])
+
+                entry = {
+                    "tag_str": tag_str,
+                    "tag_probs": tag_probs,
+                    "config": {}
+                }
+
+                tag_dict[os.path.basename(item)] = entry
+
+    def infer_one(self, img):
+        with torch.cuda.amp.autocast(enabled=self.args.fp16):
+            img = img.unsqueeze(0)
+            output = torch.sigmoid(self.model(img)).cpu().view(-1)
+        pred = torch.where(output > self.args.thr)[0].numpy()
+
+        cls_list = [(self.class_map[str(i)], float(output[i])) for i in pred]
+        return cls_list
+
+    @torch.no_grad()
+    def infer(self, path):
+        if os.path.isfile(path):
+            img = self.load_data(path).to(device)
+            cls_list = self.infer_one(img)
+            return cls_list
+        else:
+            tag_dict = {}
+            img_list = [os.path.join(path, x) for x in os.listdir(path) if x[x.rfind('.'):].lower() in IMAGE_EXTENSIONS]
+            for item in tqdm(img_list):
+                img = self.load_data(item).to(device)
+                cls_list = self.infer_one(img)
+                cls_list.sort(reverse=True, key=lambda x: x[1])
+
+                tag_probs = {name.replace('_', ' '): prob for name, prob in cls_list}
+                tag_str = ', '.join([name.replace('_', ' ') for name, _ in cls_list])
+
+                entry = {
+                    "tag_str": tag_str,
+                    "tag_probs": tag_probs,
+                    "config": {}
+                }
+
+                tag_dict[os.path.basename(item)] = entry
 
             if self.args.out_type == 'json':
                 with open(os.path.join(path, 'image_captions.json'), 'w', encoding='utf8') as f:
                     f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
 
-            return None
+
 
     @torch.no_grad()
     def infer_batch(self, path, bs=8):
@@ -148,18 +188,61 @@ class Demo:
                 output_batch = torch.sigmoid(self.model(imgs)).cpu()
 
             for output, img_path in zip(output_batch, path_list):
-                pred = torch.where(output>self.args.thr)[0].numpy()
-                cls_list = [(self.class_map[str(i)], output[i]) for i in pred]
-                cls_list.sort(reverse=True, key=lambda x:x[1])
-                if self.args.out_type == 'txt':
-                    with open(img_path[:img_path.rfind('.')]+'.txt', 'w', encoding='utf8') as f:
-                        f.write(', '.join([name.replace('_', ' ') for name, prob in cls_list]))
-                elif self.args.out_type == 'json':
-                    tag_dict[os.path.basename(img_path)] = ', '.join([name.replace('_', ' ') for name, prob in cls_list])
+                pred = torch.where(output > self.args.thr)[0].numpy()
+                cls_list = [(self.class_map[str(i)], float(output[i])) for i in pred]
+                cls_list.sort(reverse=True, key=lambda x: x[1])
+
+                tag_probs = {name.replace('_', ' '): prob for name, prob in cls_list}
+                tag_str = ', '.join([name.replace('_', ' ') for name, _ in cls_list])
+
+                entry = {
+                    "tag_str": tag_str,
+                    "tag_probs": tag_probs,
+                    "config": {}
+                }
+
+                tag_dict[os.path.basename(img_path)] = entry
 
         if self.args.out_type == 'json':
             with open(os.path.join(path, 'image_captions.json'), 'w', encoding='utf8') as f:
                 f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
+
+
+
+    @torch.no_grad()
+    def infer_batch(self, path, bs=8):
+        tag_dict = {}
+        img_list = [os.path.join(path, x) for x in os.listdir(path) if x[x.rfind('.'):].lower() in IMAGE_EXTENSIONS]
+        dataset = PathDataset(img_list, self.trans)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=bs, num_workers=4, shuffle=False)
+
+        for imgs, path_list in tqdm(loader):
+            imgs = imgs.to(device)
+
+            with torch.cuda.amp.autocast(enabled=self.args.fp16):
+                output_batch = torch.sigmoid(self.model(imgs)).cpu()
+
+            for output, img_path in zip(output_batch, path_list):
+                pred = torch.where(output > self.args.thr)[0].numpy()
+                cls_list = [(self.class_map[str(i)], float(output[i])) for i in pred]
+                cls_list.sort(reverse=True, key=lambda x: x[1])
+
+                tag_probs = {name.replace('_', ' '): prob for name, prob in cls_list}
+                tag_str = ', '.join([name.replace('_', ' ') for name, _ in cls_list])
+
+                entry = {
+                    "tag_str": tag_str,
+                    "tag_probs": tag_probs,
+                    "config": {}
+                }
+
+                tag_dict[os.path.basename(img_path)] = entry
+
+        if self.args.out_type == 'json':
+            json_path = os.path.join(os.path.dirname(path), os.path.basename(path) + '_mld.json')
+            with open(json_path, 'w', encoding='utf8') as f:
+                f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
+
 
 #python demo_ca.py --data imgs/t1.jpg --model_name caformer_m36 --ckpt ckpt/ml_caformer_m36_dec-5-97527.ckpt --thr 0.7 --image_size 448
 if __name__ == '__main__':

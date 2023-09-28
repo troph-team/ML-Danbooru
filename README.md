@@ -1,6 +1,44 @@
 # ML-Danbooru: Anime image tags detector
 
+
+
+## [Modified] Usage:
+
+
+
+1. clone repo & install deps:
+
+```bash
+
+```
+
+
+
+2. get a model:
+
+```bash
+```
+
+
+
+3. tag:
+	-  tags will be saved as json file next to the tagged folder
+	-   for more args available see the python file
+
+```bash
+python demo_ca.py --data /mnt/e/_benchmark/1k --ckpt ml_caformer_m36_dec-5-97527.ckpt --thr 0.65 --image_size 448
+```
+
+
+
+
+
+
+
+
+
 ## Introduction
+
 An anime image tag detector based on modified [ML-Decoder](https://github.com/Alibaba-MIIL/ML_Decoder).
 Model trained with cleaned [danbooru2021](https://gwern.net/danbooru2021).
 
