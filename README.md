@@ -15,20 +15,16 @@ pip install -r requirements.txt
 
 
 
-2. get a model:
+2. start tagging:
+
+   -  automatically downloads models
+   -  optimal settings preconfigured
+   -  tags will be saved as json file next to the tagged folder
+
+   -   for more args available see the python file
 
 ```bash
-wget https://huggingface.co/kiriyamaX/mld-caformer/resolve/main/ml_caformer_m36_dec-5-97527.ckpt
-```
-
-
-
-3. start tagging:
-	-  tags will be saved as json file next to the tagged folder
-	-   for more args available see the python file
-
-```bash
-python demo_ca.py --data {OUR_PATH}
+python demo_ca.py --data {IMAGE_DIR_PATH}
 ```
 
 
