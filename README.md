@@ -28,50 +28,19 @@ wget https://huggingface.co/kiriyamaX/mld-caformer/resolve/main/ml_caformer_m36_
 	-   for more args available see the python file
 
 ```bash
-python demo_ca.py--ckpt ml_caformer_m36_dec-5-97527.ckpt --thr 0.65 --image_size 448  --bs 12 --data {OUR_PATH}
-```
-
-
-
-full commands:
-```bash
-(base) root@DSK11N3:~/dev/ml-danbooru-tagger# python demo_ca.py --help
-usage: demo_ca.py [-h] [--data DATA] [--ckpt CKPT] [--class_map CLASS_MAP] [--model_name MODEL_NAME]
-                  [--num_classes NUM_CLASSES] [--image_size N] [--thr N] [--keep_ratio KEEP_RATIO] [--bs BS]
-                  [--use_ml_decoder USE_ML_DECODER] [--fp16] [--ema] [--frelu FRELU] [--xformers XFORMERS]
-                  [--decoder_embedding DECODER_EMBEDDING] [--num_layers_decoder NUM_LAYERS_DECODER]
-                  [--num_head_decoder NUM_HEAD_DECODER] [--num_queries NUM_QUERIES]
-                  [--scale_skip SCALE_SKIP] [--out_type OUT_TYPE]
-
-ML-Danbooru Demo
-
-options:
-  -h, --help            show this help message and exit
-  --data DATA
-  --ckpt CKPT
-  --class_map CLASS_MAP
-  --model_name MODEL_NAME
-  --num_classes NUM_CLASSES
-  --image_size N        input image size
-  --thr N               threshold value
-  --keep_ratio KEEP_RATIO
-  --bs BS
-  --use_ml_decoder USE_ML_DECODER
-  --fp16
-  --ema
-  --frelu FRELU
-  --xformers XFORMERS
-  --decoder_embedding DECODER_EMBEDDING
-  --num_layers_decoder NUM_LAYERS_DECODER
-  --num_head_decoder NUM_HEAD_DECODER
-  --num_queries NUM_QUERIES
-  --scale_skip SCALE_SKIP
-  --out_type OUT_TYPE
+python demo_ca.py --data {OUR_PATH}
 ```
 
 
 
 
+
+modifications:
+
+- downloads model automatically when not given
+- keeps probability of tags along with string repr
+- adds batched inference by default
+- modified json save path
 
 
 
