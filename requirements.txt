@@ -5,3 +5,6 @@ inplace_abn
 einops
 timm
 huggingface_hub
+scikit-learn
+xformers
+
