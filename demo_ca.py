@@ -201,6 +201,53 @@ class Demo:
                 f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
 
 
+class Tagger:
+    def __init__(self, model_name='caformer_m36', ckpt='', image_size=448, thr=0.6, bs=16):
+        args = argparse.Namespace(
+            data='',
+            ckpt=ckpt,
+            class_map='./class.json',
+            model_name=model_name,
+            num_classes=12547,
+            image_size=image_size,
+            thr=thr,
+            keep_ratio=False,
+            bs=bs,
+            str_thr=0.7,
+            use_ml_decoder=0,
+            fp16=False,
+            ema=False,
+            frelu=True,
+            xformers=False,
+            decoder_embedding=384,
+            num_layers_decoder=4,
+            num_head_decoder=8,
+            num_queries=80,
+            scale_skip=1,
+            out_type='json'
+        )
+        self.demo = Demo(args)
+
+    def tag_image(self, image_path):
+        self.demo.infer(image_path)
+
+    def tag_images_batch(self, images_dir):
+        self.demo.infer_batch(images_dir, self.demo.args.bs)
+
+
+import time
+def mld_cli(img_dir):
+    """
+    simplistic version of ml-danbooru tagger cli to be used in other projects
+    :param img_dir:
+    :return:
+    """
+    start = time.time()
+    tagger = Tagger(bs=16)
+    tagger.tag_images_batch(img_dir)
+    print(f"[ml-danbooru] DONE; Time taken: {time.time() - start:.4f}s")
+
+
 
 #python demo_ca.py --data imgs/t1.jpg --model_name caformer_m36 --ckpt ckpt/ml_caformer_m36_dec-5-97527.ckpt --thr 0.7 --image_size 448
 if __name__ == '__main__':
