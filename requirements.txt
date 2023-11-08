@@ -7,4 +7,4 @@ timm
 huggingface_hub
 scikit-learn
 xformers
-
+pandas
