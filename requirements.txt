@@ -6,5 +6,5 @@ einops
 timm
 huggingface_hub
 scikit-learn
-xformers
+xformers==0.0.21
 pandas
