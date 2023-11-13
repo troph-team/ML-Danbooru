@@ -8,3 +8,5 @@ huggingface_hub
 scikit-learn
 xformers==0.0.21
 pandas
+pandas
+pyarrow
