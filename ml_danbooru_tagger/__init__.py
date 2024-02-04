@@ -1,0 +1,1 @@
+from ml_danbooru_tagger.infer_ca import run_demo

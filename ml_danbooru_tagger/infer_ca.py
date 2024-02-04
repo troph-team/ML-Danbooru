@@ -19,13 +19,16 @@ import json
 from PIL import Image
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".bmp"]
 
+
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
+
 
 def make_args():
     parser = argparse.ArgumentParser(description='ML-Danbooru Demo')
@@ -42,7 +45,7 @@ def make_args():
     parser.add_argument('--bs', type=int, default=16)
 
     parser.add_argument('--str_thr', default=0.7, type=float,
-                    metavar='N', help='threshold value for probability to be saved in string')
+                        metavar='N', help='threshold value for probability to be saved in string')
 
     # ML-Decoder
     parser.add_argument('--use_ml_decoder', default=0, type=int)
@@ -64,9 +67,10 @@ def make_args():
     args = parser.parse_args()
     return args
 
+
 class Demo:
     def __init__(self, args):
-        self.args=args
+        self.args = args
 
         print('creating model {}...'.format(args.model_name))
         args.model_path = None
@@ -76,11 +80,11 @@ class Demo:
         else:
             ckpt_path = self.download_model()
             state = torch.load(ckpt_path, map_location='cpu')
-        
+
         if args.ema:
             state = state['ema']
         elif 'model' in state:
-            state=state['model']
+            state = state['model']
         model.load_state_dict(state, strict=True)
 
         self.model = model.to(device).eval()
@@ -95,20 +99,19 @@ class Demo:
             ])
         else:
             self.trans = transforms.Compose([
-                                    transforms.Resize((args.image_size, args.image_size)),
-                                    transforms.ToTensor(),
-                                ])
+                transforms.Resize((args.image_size, args.image_size)),
+                transforms.ToTensor(),
+            ])
 
         self.load_class_map()
 
-    
     def download_model(self):
         REPO_ID = "kiriyamaX/mld-caformer"
         CKPT_FILE = "ml_caformer_m36_dec-5-97527.ckpt"
         print(f"Loading model file from {REPO_ID}")
         model_path = hf_hub_download(repo_id=REPO_ID, filename=CKPT_FILE)
         return model_path
-    
+
     def load_class_map(self):
         with open(self.args.class_map, 'r') as f:
             self.class_map = json.load(f)
@@ -126,7 +129,6 @@ class Demo:
 
         cls_list = [(self.class_map[str(i)], float(output[i])) for i in pred]
         return cls_list
-
 
     @torch.no_grad()
     def infer(self, path):
@@ -161,8 +163,6 @@ class Demo:
                 json_path = os.path.join(os.path.dirname(path), os.path.basename(path) + '_mld.json')
                 with open(json_path, 'w', encoding='utf8') as f:
                     f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
-
-
 
     @torch.no_grad()
     def infer_batch(self, path, bs=8):
@@ -236,6 +236,8 @@ class Tagger:
 
 
 import time
+
+
 def mld_cli(img_dir):
     """
     simplistic version of ml-danbooru tagger cli to be used in other projects
@@ -247,13 +249,43 @@ def mld_cli(img_dir):
     tagger.tag_images_batch(img_dir)
     print(f"[ml-danbooru] DONE; Time taken: {time.time() - start:.4f}s")
 
+def run_demo(image_dir_path):
+    # Set up the arguments as if they were parsed from the command line
+    args = argparse.Namespace(
+        data=image_dir_path,
+        ckpt='',  # You need to set the path to your model checkpoint here if it's not provided via command line
+        class_map='./class.json',
+        model_name='caformer_m36',
+        num_classes=12547,
+        image_size=448,
+        thr=0.7,
+        keep_ratio=False,
+        bs=16,
+        str_thr=0.7,
+        use_ml_decoder=0,
+        fp16=False,
+        ema=False,
+        frelu=True,
+        xformers=False,
+        decoder_embedding=384,
+        num_layers_decoder=4,
+        num_head_decoder=8,
+        num_queries=80,
+        scale_skip=1,
+        out_type='json'
+    )
+    # Instantiate and use the Demo class as before
+    demo = Demo(args)
+    if args.bs > 1:
+        demo.infer_batch(args.data, args.bs)
+    else:
+        demo.infer(args.data)
 
-
-#python demo_ca.py --data imgs/t1.jpg --model_name caformer_m36 --ckpt ckpt/ml_caformer_m36_dec-5-97527.ckpt --thr 0.7 --image_size 448
+# python demo_ca.py --data imgs/t1.jpg --model_name caformer_m36 --ckpt ckpt/ml_caformer_m36_dec-5-97527.ckpt --thr 0.7 --image_size 448
 if __name__ == '__main__':
     args = make_args()
     demo = Demo(args)
-    if args.bs>1:
+    if args.bs > 1:
         cls_list = demo.infer_batch(args.data, args.bs)
     else:
         cls_list = demo.infer(args.data)
