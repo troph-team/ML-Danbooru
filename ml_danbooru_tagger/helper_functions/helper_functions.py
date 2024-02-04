@@ -322,4 +322,5 @@ def get_merged_mld_jsons(image_dir_path: str) -> Dict[str, dict]:
         original_basename = filename.rsplit('_mld.json', 1)[0]
         # Add the content to the merged dictionary
         merged_dict[original_basename] = json_content
+        
     return merged_dict

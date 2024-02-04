@@ -112,7 +112,18 @@ class Demo:
         model_path = hf_hub_download(repo_id=REPO_ID, filename=CKPT_FILE)
         return model_path
 
+    def download_class_map(self):
+        REPO_ID = "kiriyamaX/mld-caformer"
+        CLASS_FILE = "classes.json"
+        print(f"Loading class map file from {REPO_ID}")
+        model_path = hf_hub_download(repo_id=REPO_ID, filename=CLASS_FILE)
+        return model_path    
+    
     def load_class_map(self):
+        if not self.args.class_map or not os.path.exists(self.args.class_map):
+            print("class map not provided (or not found), downloading from huggingface hub")
+            self.args.class_map = self.download_class_map()
+
         with open(self.args.class_map, 'r') as f:
             self.class_map = json.load(f)
 
@@ -264,7 +275,7 @@ def infer_mld_tags(image_dir_path:str, batch_size:int=16, str_thr:float=0.7):
     args = argparse.Namespace(
         data=image_dir_path,
         ckpt='',  # You need to set the path to your model checkpoint here if it's not provided via command line
-        class_map='./class.json',
+        class_map='',  # automatic download if not specified
         model_name='caformer_m36',
         num_classes=12547,
         image_size=448,
