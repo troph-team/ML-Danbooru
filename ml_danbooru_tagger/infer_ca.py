@@ -249,7 +249,17 @@ def mld_cli(img_dir):
     tagger.tag_images_batch(img_dir)
     print(f"[ml-danbooru] DONE; Time taken: {time.time() - start:.4f}s")
 
-def run_demo(image_dir_path):
+
+def infer_mld_tags(image_dir_path:str, batch_size:int=16, str_thr:float=0.7):
+    """
+
+    write ml_danbooru tags to json files right next to the image files.
+    to get a collected result (of all mld jsons) into a single jsonl file, use `ml_danbooru_tagger.get_merged_mld_jsons(image_dir)`
+
+    :param image_dir_path: path to the directory containing images to be tagged
+    :param batch_size: batch size for inference
+    :param str_thr: threshold value for probability to be saved in string
+    """
     # Set up the arguments as if they were parsed from the command line
     args = argparse.Namespace(
         data=image_dir_path,
@@ -258,10 +268,10 @@ def run_demo(image_dir_path):
         model_name='caformer_m36',
         num_classes=12547,
         image_size=448,
-        thr=0.7,
+        thr=0.5,
         keep_ratio=False,
-        bs=16,
-        str_thr=0.7,
+        bs=batch_size,
+        str_thr=str_thr,
         use_ml_decoder=0,
         fp16=False,
         ema=False,
@@ -280,6 +290,7 @@ def run_demo(image_dir_path):
         demo.infer_batch(args.data, args.bs)
     else:
         demo.infer(args.data)
+
 
 # python demo_ca.py --data imgs/t1.jpg --model_name caformer_m36 --ckpt ckpt/ml_caformer_m36_dec-5-97527.ckpt --thr 0.7 --image_size 448
 if __name__ == '__main__':

@@ -293,3 +293,33 @@ def crop_fix(img: Image):
     w=(w//4)*4
     h=(h//4)*4
     return img.crop((0,0,w,h))
+
+
+import os
+import orjson
+from typing import Dict
+from tqdm import tqdm
+
+def get_merged_mld_jsons(image_dir_path: str) -> Dict[str, dict]:
+    """
+    Merge all _mld.json files in a directory into a single dictionary.
+
+    :param image_dir_path: path to the directory containing _mld.json files
+    :return: A dictionary with the basename (without _mld suffix) as keys and the json content as values
+    """
+    merged_dict = {}
+    # List all files in the given directory and filter out non-_mld.json files
+    json_files = [f for f in os.listdir(image_dir_path) if f.endswith('_mld.json')]
+    
+    # Iterate through files with a progress bar
+    for filename in tqdm(json_files, desc="Merging JSON files"):
+        # Construct the full path to the file
+        filepath = os.path.join(image_dir_path, filename)
+        # Open and read the json file
+        with open(filepath, 'rb') as f:  # Note: orjson loads from 'rb' (read bytes)
+            json_content = orjson.loads(f.read())
+        # Remove the '_mld.json' suffix to get the original basename
+        original_basename = filename.rsplit('_mld.json', 1)[0]
+        # Add the content to the merged dictionary
+        merged_dict[original_basename] = json_content
+    return merged_dict

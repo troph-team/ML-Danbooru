@@ -1,1 +1,2 @@
 from ml_danbooru_tagger.infer_ca import run_demo
+from ml_danbooru_tagger.helper_functions.helper_functions import get_merged_mld_jsons
