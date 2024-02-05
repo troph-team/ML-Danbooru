@@ -8,14 +8,14 @@ import torch.optim
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 
-from src_files.helper_functions.bn_fusion import fuse_bn_recursively
-from src_files.models import create_model
+from ml_danbooru_tagger.helper_functions.bn_fusion import fuse_bn_recursively
+from ml_danbooru_tagger.models import create_model
 from tqdm.auto import tqdm
 import json
 
 use_abn=True
 try:
-    from src_files.models.tresnet.tresnet import InplacABN_to_ABN
+    from ml_danbooru_tagger.models.tresnet.tresnet import InplacABN_to_ABN
 except:
     use_abn=False
 
@@ -58,7 +58,7 @@ def make_args():
     return args
 
 
-def crop_fix(img: Image):
+def crop_fix(img: Image.Image):
     w, h = img.size
     w = (w // 4) * 4
     h = (h // 4) * 4

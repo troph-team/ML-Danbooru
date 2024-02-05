@@ -7,13 +7,13 @@ import torch.optim
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from torch.optim import lr_scheduler
-from src_files.helper_functions.helper_functions import add_weight_decay_lr
-from src_files.data.Danbooru import Danbooru_DN
-from src_files.models import create_model
-from src_files.loss_functions.losses import AsymmetricLoss
+from ml_danbooru_tagger.helper_functions.helper_functions import add_weight_decay_lr
+from ml_danbooru_tagger.data.Danbooru import Danbooru_DN
+from ml_danbooru_tagger.models import create_model
+from ml_danbooru_tagger.loss_functions.losses import AsymmetricLoss
 from torch.cuda.amp import GradScaler, autocast
 
-from src_files import dist as Adist
+from ml_danbooru_tagger import dist as Adist
 from loguru import logger
 import time
 

@@ -64,11 +64,19 @@ def make_args():
     args = parser.parse_args()
     return args
 
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+from logging import getLogger
+
 class Demo:
     def __init__(self, args):
+
+        self.logger = getLogger(__name__)
         self.args=args
 
-        print('creating model {}...'.format(args.model_name))
+        self.logger.info('creating model {}...'.format(args.model_name))
         args.model_path = None
         model = create_model(args, load_head=True).to(device)
         if args.ckpt:
@@ -85,7 +93,7 @@ class Demo:
 
         self.model = model.to(device).eval()
         #######################################################
-        print('done')
+        self.logger.info('model load done')
 
         if args.keep_ratio:
             self.trans = transforms.Compose([
@@ -105,30 +113,26 @@ class Demo:
     def download_model(self):
         REPO_ID = "kiriyamaX/mld-caformer"
         CKPT_FILE = "ml_caformer_m36_dec-5-97527.ckpt"
-        print(f"Loading model file from {REPO_ID}")
+        self.logger.info(f"Loading model file from {REPO_ID}")
         model_path = hf_hub_download(repo_id=REPO_ID, filename=CKPT_FILE)
         return model_path
     
     def download_class_map(self):
         REPO_ID = "kiriyamaX/mld-caformer"
         CLASS_FILE = "mld_caformer_mapping_dict.json"
-        print(f"Loading class map file from {REPO_ID}")
+        self.logger.info(f"Loading class map file from {REPO_ID}")
         model_path = hf_hub_download(repo_id=REPO_ID, filename=CLASS_FILE)
         return model_path    
     
     def load_class_map(self):
         if not self.args.class_map or not os.path.exists(self.args.class_map):
-            print("class map not provided (or not found), downloading from huggingface hub")
+            self.logger.info("class map not provided (or not found), downloading from huggingface hub")
             self.args.class_map = self.download_class_map()
 
-        print("using class map from", self.args.class_map)
+        print(f"using class map from {self.args.class_map}")
         with open(self.args.class_map, 'r') as f:
             self.class_map = json.load(f)
-            print(f"loaded {len(self.class_map)} classes")
-
-    # def load_class_map(self):
-    #     with open(self.args.class_map, 'r') as f:
-    #         self.class_map = json.load(f)
+            self.logger.info(f"loaded {len(self.class_map)} classes")
 
     def load_data(self, path):
         img = Image.open(path).convert('RGB')
@@ -145,39 +149,52 @@ class Demo:
         return cls_list
 
 
+    def _get_single_entry_dict(self, img_root, cls_list, config={}):
+        cls_list.sort(reverse=True, key=lambda x: x[1])        
+        tag_probs = {name.replace('_', ' '): round(prob, 8) for name, prob in cls_list}
+        tag_str = ', '.join([name.replace('_', ' ') for name, prob in cls_list if prob >= self.args.str_thr])
+
+        entry = {
+            "tag_str": tag_str,
+            "tag_probs": tag_probs,
+            "config": config,
+        }
+        return entry
+    
+    
     @torch.no_grad()
     def infer(self, path):
 
-        root_dir = self.args.data  # Assuming --data is the root directory
+        # Assuming --data is the root directory
+        root_dir = self.args.data  
 
-        if os.path.isfile(path):
+        if os.path.isfile(path):  # single image
             img = self.load_data(path).to(device)
             cls_list = self.infer_one(img)
-            return cls_list
-        else:
+            curr_entry = self._get_single_entry_dict(root_dir, cls_list)
+            return curr_entry
+        
+        else: # directory
             tag_dict = {}
             img_list = [os.path.join(path, x) for x in os.listdir(path) if x[x.rfind('.'):].lower() in IMAGE_EXTENSIONS]
             for item in tqdm(img_list):
                 img = self.load_data(item).to(device)
                 cls_list = self.infer_one(img)
-                cls_list.sort(reverse=True, key=lambda x: x[1])
+                curr_entry = self._get_single_entry_dict(root_dir, cls_list)
 
-                tag_probs = {name.replace('_', ' '): round(prob, 8) for name, prob in cls_list}
-                tag_str = ', '.join([name.replace('_', ' ') for name, prob in cls_list if prob >= self.args.str_thr])
-
-                entry = {
-                    "tag_str": tag_str,
-                    "tag_probs": tag_probs,
-                    "config": {}
-                }
-
+                # add to tag_dict (with relative path as key)
                 relative_path = os.path.relpath(item, root_dir)
-                tag_dict[relative_path] = entry
+                tag_dict[relative_path] = curr_entry
 
             if self.args.out_type == 'json':
                 json_path = os.path.join(os.path.dirname(path), os.path.basename(path) + '_mld.json')
+                self.logger.info(f"writing json to {json_path}")
                 with open(json_path, 'w', encoding='utf8') as f:
                     f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
+                
+                self.logger.info(f"json written to {json_path}")
+                
+            return tag_dict
 
 
 
@@ -212,10 +229,12 @@ class Demo:
                 relative_path = os.path.relpath(img_path, root_dir)
                 tag_dict[relative_path] = entry
 
-        if self.args.out_type == 'json':
+        if self.args.out_type == 'json':            
             json_path = os.path.join(os.path.dirname(path), os.path.basename(path) + '_mld.json')
             with open(json_path, 'w', encoding='utf8') as f:
                 f.write(json.dumps(tag_dict, indent=2, ensure_ascii=False))
+        
+        return tag_dict
 
 
 class Tagger:
@@ -223,8 +242,7 @@ class Tagger:
         args = argparse.Namespace(
             data='',
             ckpt=ckpt,
-            # class_map='./class.json',
-            class_map='',
+            class_map='./class.json',
             model_name=model_name,
             num_classes=12547,
             image_size=image_size,
@@ -264,6 +282,62 @@ def mld_cli(img_dir):
     tagger = Tagger(bs=16)
     tagger.tag_images_batch(img_dir)
     print(f"[ml-danbooru] DONE; Time taken: {time.time() - start:.4f}s")
+
+
+
+import argparse
+
+def make_args_safe():
+    """
+    Create an argparse.Namespace with default values without parsing command-line arguments.
+    This avoids conflicts in environments like Jupyter notebooks where unintended command-line arguments may be present.
+    """
+    args = argparse.Namespace(
+        data='',
+        ckpt='',
+        class_map='',
+        model_name='caformer_m36',
+        num_classes=12547,
+        image_size=448,
+        thr=0.6,
+        keep_ratio=False,
+        bs=16,
+        str_thr=0.7,
+        use_ml_decoder=0,
+        fp16=False,
+        ema=False,
+        frelu=True,
+        xformers=False,
+        decoder_embedding=384,
+        num_layers_decoder=4,
+        num_head_decoder=8,
+        num_queries=80,
+        scale_skip=1,
+        out_type='json'
+    )
+    return args
+
+
+def infer_batch_with_defaults(image_path, class_map_path=''):
+    """
+    Function to run batch inference using default arguments with specified image path, bypassing command-line argument parsing.
+    Args:
+    - image_path (str): The path to the directory containing images to be processed in batch.
+    - class_map_path (str): The path to the class map JSON file. If not provided, will download from Hugging Face Hub.
+    """
+    # Use the safe version of make_args to get default arguments
+    default_args = make_args_safe()
+
+    # Update the 'data' and 'class_map' argument
+    default_args.data = image_path
+    if class_map_path:
+        default_args.class_map = class_map_path
+
+    # Create the Demo instance with updated arguments
+    demo = Demo(default_args)
+    tag_dict = demo.infer_batch(default_args.data, default_args.bs)
+    return tag_dict
+
 
 
 

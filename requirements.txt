@@ -7,4 +7,5 @@ timm
 huggingface_hub
 scikit-learn
 xformers
-
+tqdm
+orjson

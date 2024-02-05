@@ -7,18 +7,18 @@ import torch.optim
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from torch.optim import lr_scheduler
-from src_files.helper_functions.helper_functions import mAP, CutoutPIL, ModelEma, \
+from ml_danbooru_tagger.helper_functions.helper_functions import mAP, CutoutPIL, ModelEma, \
     add_weight_decay
-from src_files.data.Danbooru import Danbooru
-from src_files.data.utils import ResizeArea, WeakRandAugment
-from src_files.models import create_model
-from src_files.loss_functions.losses import AsymmetricLoss
+from ml_danbooru_tagger.data.Danbooru import Danbooru
+from ml_danbooru_tagger.data.utils import ResizeArea, WeakRandAugment
+from ml_danbooru_tagger.models import create_model
+from ml_danbooru_tagger.loss_functions.losses import AsymmetricLoss
 from torch.cuda.amp import GradScaler, autocast
 
 from torch.utils.data.distributed import DistributedSampler
 import torch.distributed as dist
 
-from src_files import dist as Adist
+from ml_danbooru_tagger import dist as Adist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.backends.cudnn as cudnn
 import numpy as np
