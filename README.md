@@ -5,6 +5,21 @@
 ## [Modified] Usage:
 
 
+**package usage**:
+
+1. install the package: `pip install -e .`
+
+2. get labels by importing function from the package:
+
+```python
+from ml_danbooru_tagger import infer_batch_with_defaults
+bench_tag_dict = infer_batch_with_defaults("bench_images_small")
+```
+
+
+
+**CLI usage:**
+
 
 1. clone repo & install deps:
 
@@ -26,9 +41,6 @@ pip install -r requirements.txt
 ```bash
 python demo_ca.py --data {IMAGE_DIR_PATH}
 ```
-
-
-
 
 
 modifications:
