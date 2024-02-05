@@ -1,2 +1,2 @@
-from ml_danbooru_tagger.infer_ca import run_demo
+from ml_danbooru_tagger.infer_ca import infer_mld_tags, run_infer_batch_with_defaults
 from ml_danbooru_tagger.helper_functions.helper_functions import get_merged_mld_jsons

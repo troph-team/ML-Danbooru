@@ -126,10 +126,6 @@ class Demo:
             self.class_map = json.load(f)
             print(f"loaded {len(self.class_map)} classes")
 
-    # def load_class_map(self):
-    #     with open(self.args.class_map, 'r') as f:
-    #         self.class_map = json.load(f)
-
     def load_data(self, path):
         img = Image.open(path).convert('RGB')
         img = self.trans(img)
@@ -223,8 +219,7 @@ class Tagger:
         args = argparse.Namespace(
             data='',
             ckpt=ckpt,
-            # class_map='./class.json',
-            class_map='',
+            class_map='./class.json',
             model_name=model_name,
             num_classes=12547,
             image_size=image_size,
@@ -264,6 +259,64 @@ def mld_cli(img_dir):
     tagger = Tagger(bs=16)
     tagger.tag_images_batch(img_dir)
     print(f"[ml-danbooru] DONE; Time taken: {time.time() - start:.4f}s")
+
+
+
+import argparse
+
+def make_args_safe():
+    """
+    Create an argparse.Namespace with default values without parsing command-line arguments.
+    This avoids conflicts in environments like Jupyter notebooks where unintended command-line arguments may be present.
+    """
+    args = argparse.Namespace(
+        data='',
+        ckpt='',
+        class_map='',
+        model_name='caformer_m36',
+        num_classes=12547,
+        image_size=448,
+        thr=0.6,
+        keep_ratio=False,
+        bs=16,
+        str_thr=0.7,
+        use_ml_decoder=0,
+        fp16=False,
+        ema=False,
+        frelu=True,
+        xformers=False,
+        decoder_embedding=384,
+        num_layers_decoder=4,
+        num_head_decoder=8,
+        num_queries=80,
+        scale_skip=1,
+        out_type='json'
+    )
+    return args
+
+
+def run_infer_batch_with_defaults(image_path):
+    """
+    Function to run batch inference using default arguments with specified image path, bypassing command-line argument parsing.
+    Args:
+    - image_path (str): The path to the directory containing images to be processed in batch.
+    """
+    # Use the safe version of make_args to get default arguments
+    default_args = make_args_safe()
+
+    # Update the 'data' argument to be the specified image path
+    default_args.data = image_path
+
+    # Create the Demo instance with updated arguments
+    demo = Demo(default_args)
+
+    # Perform batch inference as the batch size is assumed to be more than 1 in default settings
+    demo.infer_batch(default_args.data, default_args.bs)
+    # Note: The infer and infer_batch methods do not return values but save results to files or print them directly,
+    # so there's no need to capture or print results here unless you modify those methods to return data.
+
+# Ensure that you have the correct paths and environment setup before running this.
+# run_infer_batch_with_defaults('path/to/your/bench_images_small')
 
 
 
