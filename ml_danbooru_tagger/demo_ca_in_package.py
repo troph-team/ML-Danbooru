@@ -318,7 +318,7 @@ def make_args_safe():
     return args
 
 
-def infer_batch_with_defaults(image_path, class_map_path=''):
+def infer_batch_with_defaults(image_path, class_map_path='', batch_size = None):
     """
     Function to run batch inference using default arguments with specified image path, bypassing command-line argument parsing.
     Args:
@@ -332,6 +332,9 @@ def infer_batch_with_defaults(image_path, class_map_path=''):
     default_args.data = image_path
     if class_map_path:
         default_args.class_map = class_map_path
+    
+    if batch_size:
+        default_args.bs = batch_size
 
     # Create the Demo instance with updated arguments
     demo = Demo(default_args)
