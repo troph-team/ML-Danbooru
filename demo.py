@@ -58,7 +58,7 @@ def make_args():
     return args
 
 
-def crop_fix(img: Image):
+def crop_fix(img: Image.Image):
     w, h = img.size
     w = (w // 4) * 4
     h = (h // 4) * 4
