@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='ml_danbooru_tagger',
-    version='0.2.1',
+    version='0.2.2',
     packages=find_packages(),
     install_requires=[
-        'torch>=1.12',
-        'torchvision>=0.5.0',
+        'torch',
+        'torchvision',
         'loguru',
         'inplace_abn',
         'einops',
