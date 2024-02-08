@@ -6,14 +6,14 @@ setup(
     packages=find_packages(),
     install_requires=[
         'torch',
-        'torchvision',
+        'torchvision>=0.5.0',
         'loguru',
         'inplace_abn',
         'einops',
         'timm',
         'huggingface_hub',
         'scikit-learn',
-        'xformers',
+        'xformers==0.0.22.post7',  # higher version requires torch 2.2
     ],
     entry_points={
         'console_scripts': [
