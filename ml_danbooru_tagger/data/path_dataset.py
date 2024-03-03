@@ -14,9 +14,12 @@ class PathDataset(Dataset):
                 with Image.open(path) as img:
                     img.verify()  # Verify the image to check if it's corrupted
                 valid_indices.append(i)
-            except (IOError, UnidentifiedImageError):
-                print(f"Skipping corrupted image: {path}")
+            except (IOError, UnidentifiedImageError, SyntaxError) as e:
+                print(f"Skipping corrupted image due to {e.__class__.__name__}: {path}")
+            except Exception as e:  # A catch-all for any other unforeseen exceptions
+                print(f"Skipping image due to unexpected error ({e.__class__.__name__}): {path}")
         return valid_indices
+
 
     def __getitem__(self, index):
         valid_index = self.valid_indices[index]
