@@ -17,6 +17,14 @@ bench_tag_dict = infer_batch_with_defaults("bench_images_small")
 ```
 
 
+**package usage:**
+
+to build the package:
+```bash
+python setup.py bdist_wheel
+```
+
+
 
 **CLI usage:**
 
@@ -45,6 +53,8 @@ python demo_ca.py --data {IMAGE_DIR_PATH}
 
 modifications:
 
+- better error handling
+- can be used as a pacakge on downsteraam projects
 - downloads model automatically when not given
 - keeps probability of tags along with string repr
 - adds batched inference by default
@@ -54,34 +64,6 @@ modifications:
 
 
 
-## [original readme below] Introduction
+## [Original Readme]
 
-An anime image tag detector based on modified [ML-Decoder](https://github.com/Alibaba-MIIL/ML_Decoder).
-Model trained with cleaned [danbooru2021](https://gwern.net/danbooru2021).
-
-+ Designed a new TResNet-D structure as backbone to enhance the learning of low-level features.
-+ Replace the ReLU in backbone with [FReLU](https://arxiv.org/pdf/2007.11824.pdf).
-+ Using learnable queries for transformer decoder.
-
-## Model Structure
-
-![](./imgs/ml_danbooru.png)
-
-## Model-Zoo
-https://huggingface.co/7eu7d7/ML-Danbooru
-
-## Usage
-Download the model and run below command:
-```bash
-python demo.py --data <path to image or directory> --model_name tresnet_d --num_of_groups 32 --ckpt <path to ckpt> --thr 0.7 --image_size 640 
-```
-
-Keep the image ratio invariant:
-```bash
-python demo.py --data <path to image or directory> --model_name tresnet_d --num_of_groups 32 --ckpt <path to ckpt> --thr 0.7 --image_size 640 --keep_ratio True
-```
-
-### ML_CAFormer
-```bash
-python demo_ca.py --data <path to image or directory> --model_name caformer_m36 --ckpt <path to ckpt> --thr 0.7 --image_size 448
-```
+see: https://github.com/IrisRainbowNeko/ML-Danbooru
