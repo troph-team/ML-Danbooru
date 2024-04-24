@@ -14,6 +14,8 @@ from ml_danbooru_tagger.models import create_model
 from tqdm.auto import tqdm
 
 from huggingface_hub import hf_hub_download
+import boto3
+import requests
 
 import pandas as pd
 import json
@@ -50,8 +52,7 @@ def make_args():
     parser.add_argument('--str_thr', default=0.75, type=float,
                     metavar='N', help='threshold value for probability to be saved in string')
 
-#     parser.add_argument('--tag_index_dict_path', default='s3://pixai-test-uw2/richard/tags_index_dict.parquet', type=str)
-    parser.add_argument('--class_map', default='tags_index.json', type=str)
+    parser.add_argument('--class_map', default='', type=str)
 
 
     # ML-Decoder
@@ -124,28 +125,74 @@ class Demo:
 
         self.load_class_map()
 
-    # HF not set up yet
-    # def download_model(self):
-    #     REPO_ID = "kiriyamaX/mld-caformer"
-    #     CKPT_FILE = "ml_caformer_m36_dec-5-97527.ckpt"
-    #     self.logger.info(f"Loading model file from {REPO_ID}")
-    #     model_path = hf_hub_download(repo_id=REPO_ID, filename=CKPT_FILE)
-    #     return model_path
+    # S3 code for model ckpt setup
+    def download_model(self):
+        # URL of the ckpt file in the public S3 bucket
+        url = 'https://bucket-public-access-uw2.s3.us-west-2.amazonaws.com/dist/mld-tagger-v1-20k/caformer_m36-mAP45.ckpt'
 
-    # HF not set up yet
-    # def download_class_map(self):
-    #     REPO_ID = "kiriyamaX/mld-caformer"
-    #     CLASS_FILE = "mld_caformer_mapping_dict.json"
-    #     self.logger.info(f"Loading class map file from {REPO_ID}")
-    #     model_path = hf_hub_download(repo_id=REPO_ID, filename=CLASS_FILE)
-    #     return model_path    
+        # Define the base directory where the 'models' folder will be created
+        base_directory = os.getcwd()  # Change this to the desired path on your local machine
+
+        # Full path for the 'models' directory
+        models_directory = os.path.join(base_directory, 'models')
+
+        # Check if the 'models' directory exists, if not, create it
+        if not os.path.exists(models_directory):
+            os.makedirs(models_directory)
+
+        local_path = os.path.join(models_directory, 'model.ckpt')
+            
+        # Send a GET request to the URL with streaming enabled
+        response = requests.get(url, stream=True)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            with open(local_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1048576):  # Adjust chunk size as necessary
+                    f.write(chunk)
+            self.logger.info("Checkpoint file downloaded successfully!")
+        else:
+            self.logger.info(f"Failed to download checkpoint file: {response.status_code}")
+        
+        return local_path
+
+    # S3 code for class_map setup
+    def download_class_map(self):
+        # URL of the JSON file on the public S3 bucket
+        url = 'https://bucket-public-access-uw2.s3.us-west-2.amazonaws.com/dist/mld-tagger-v1-20k/tags_index.json'
+        
+        # Define the base directory where the 'models' folder will be created
+        base_directory = os.getcwd()  # Change this to the desired path on your local machine
+
+        # Full path for the 'models' directory
+        dict_directory = os.path.join(base_directory, 'models')
+
+        # Check if the 'models' directory exists, if not, create it
+        if not os.path.exists(dict_directory):
+            os.makedirs(dict_directory)
+
+        local_path = os.path.join(dict_directory, 'tags_index.json')
+            
+        # Send a GET request to the URL with streaming enabled
+        response = requests.get(url, stream=True)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            with open(local_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):  # Adjust chunk size as necessary
+                    f.write(chunk)
+            self.logger.info("Tags dict file downloaded successfully!")
+        else:
+            self.logger.info(f"Failed to download Tags dict file: {response.status_code}")
+        
+        return local_path
+    
+    
     
     def load_class_map(self):
         if not self.args.class_map or not os.path.exists(self.args.class_map):
-            self.logger.info("class map not provided (or not found), downloading from huggingface hub")
+            self.logger.info("class map not provided (or not found), downloading from s3")
             self.args.class_map = self.download_class_map()
-
-        print(f"using class map from {self.args.class_map}")
         with open(self.args.class_map, 'r') as f:
             self.class_map = json.load(f)
             self.logger.info(f"loaded {len(self.class_map)} classes")
