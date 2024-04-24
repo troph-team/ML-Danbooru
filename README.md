@@ -1,5 +1,8 @@
 # ML-Danbooru: Anime image tags detector
-test commit
+infer_batch_20k_with_defaults.py set up
+```
+python infer_batch_20k_with_defaults.py --data [data path] --bs 8 --ckpt [ckpt path] --general_thr .75 --characters_thr .85
+```
 
 
 ## [Modified] Usage:
