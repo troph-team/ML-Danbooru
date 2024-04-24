@@ -3,7 +3,7 @@ infer_batch_20k_with_defaults.py set up
 ```
 python infer_batch_20k_with_defaults.py --data [data path] --bs 8 --ckpt [ckpt path] --general_thr .75 --characters_thr .85
 ```
-Need to set up ckpt and class_map on huggging face
+Need to set up ckpt and class_map on s3
 ##
 requirements.txt updated
 ##
