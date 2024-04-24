@@ -3,14 +3,26 @@ infer_batch_20k_with_defaults.py set up
 ```
 python infer_batch_20k_with_defaults.py --data [data path] --bs 8 --ckpt [ckpt path] --general_thr .75 --characters_thr .85
 ```
-
-
+Need to set up ckpt and class_map on huggging face
+##
+requirements.txt updated
+##
+Code to download xformer==0.0.22 with torch 2.1.0 and cu118:
+```
+pip install xformers==0.0.22.post4 --index-url https://download.pytorch.org/whl/cu118
+```
+Code to download inplace_abn:
+```
+git clone https://github.com/mapillary/inplace_abn.git
+cd inplace_abn
+python setup.py install
+```
 ## [Modified] Usage:
 
 
 **package usage**:
 
-1. install the package: `pip install -e .`
+1. install the package: `pip install -r requirements.txt `
 
 2. get labels by importing function from the package:
 
