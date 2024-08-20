@@ -61,6 +61,8 @@ class PathDataset(Dataset):
                 valid_indices.append(i)
             except (IOError, SyntaxError, FileNotFoundError) as e:
                 print(f"Skipping corrupted image due to {e.__class__.__name__}: {path}")
+            except AttributeError as e:
+                print(f"Skipping image due to AttributeError: {e}, {path}")
             except Exception as e:  # A catch-all for any other unforeseen exceptions
                 print(f"Skipping image due to unexpected error ({e.__class__.__name__}): {path}")
         return valid_indices
